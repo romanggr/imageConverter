@@ -45,12 +45,10 @@ public class ImageConverter {
             outputFolder.delete();
         }
 
-        if (outputFolder.mkdir()) {
-            System.out.println("Output folder created");
-        }
+        outputFolder.mkdir();
     }
 
-    private static void deleteDirectory(File directory) throws IOException {
+    private static void deleteDirectory(File directory) {
         for (File file : directory.listFiles()) {
             if (file.isDirectory()) {
                 deleteDirectory(file);
@@ -115,7 +113,7 @@ public class ImageConverter {
                 System.out.println("Converted to WebP: " + outputFilePath);
 
             } catch (IOException e) {
-                System.err.println("Помилка конвертації: " + e.getMessage());
+                System.err.println("Converting error : " + e.getMessage());
             }
         }
     }
