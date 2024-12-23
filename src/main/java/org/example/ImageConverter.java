@@ -9,10 +9,12 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.*;
 
 public class ImageConverter {
     private static final String INPUT_FOLDER = "src/main/resources/input-files";
     private static final String OUTPUT_FOLDER = "output-files";
+    private static final int THREADS_QUANTITY = 3;
 
     public static void main(String[] args) {
         File inputFolder = new File(INPUT_FOLDER);
@@ -103,18 +105,38 @@ public class ImageConverter {
 
 
     private static void convertToWebP(List<File> inputFiles) throws IOException {
+        ExecutorService executorService = Executors.newFixedThreadPool(THREADS_QUANTITY);
+        List<Future<Void>> futures = new ArrayList<>();
+
 
         for (File inputFile : inputFiles) {
-            ImmutableImage image = ImmutableImage.loader().fromFile(inputFile);
-            String outputFilePath = OUTPUT_FOLDER + "/" + inputFile.getName().substring(0, inputFile.getName().lastIndexOf(".")) + ".webp";
+            Callable<Void> task = () -> {
+                ImmutableImage image = ImmutableImage.loader().fromFile(inputFile);
+                String outputFilePath = OUTPUT_FOLDER + "/" + inputFile.getName().substring(0, inputFile.getName().lastIndexOf(".")) + ".webp";
 
+                try {
+                    image.output(WebpWriter.MAX_LOSSLESS_COMPRESSION, outputFilePath);
+                    System.out.println("Converted to WebP: " + outputFilePath);
+
+                } catch (IOException e) {
+                    System.err.println("Converting error : " + e.getMessage());
+                }
+                return null;
+            };
+
+            futures.add(executorService.submit(task));
+        }
+
+
+        for (Future<Void> future : futures) {
             try {
-                image.output(WebpWriter.MAX_LOSSLESS_COMPRESSION, outputFilePath);
-                System.out.println("Converted to WebP: " + outputFilePath);
-
-            } catch (IOException e) {
-                System.err.println("Converting error : " + e.getMessage());
+                future.get();
+            } catch (Exception e) {
+                System.err.println("Error waiting for task to complete: " + e.getMessage());
             }
         }
+
+        executorService.shutdown();
     }
+
 }
