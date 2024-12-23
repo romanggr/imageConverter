@@ -39,8 +39,3 @@ build/
 
 # Ignore input-files
 src/main/resources/input-files/*
-!src/main/resources/input-files/.gitkeep
-
-# Ignore output-files
-/output-files/*
-!/output-files/.gitkeep
